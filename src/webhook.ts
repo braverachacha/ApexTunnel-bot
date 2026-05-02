@@ -11,27 +11,23 @@ export async function handleWebhook(
     res.status(200).send("ok");
 
     const data = req.body;
-    console.log("Webhook payload:", JSON.stringify(data, null, 2));
-
     const message: IncomingMessage | null = parseIncomingMessage(data);
 
     if (!message) {
-      console.log("No valid message found in webhook payload");
       return;
     }
 
-    console.log(`📨 From ${message.from}: ${message.body}`);
+    console.log(`[WhatsApp] ${message.from}: ${message.body.substring(0, 50)}`);
 
     const response: MessageResponse = await routeMessage(message);
     await sendWhatsAppMessage(message.from, response);
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("[Webhook Error]", error instanceof Error ? error.message : "Unknown error");
   }
 }
 
 function parseIncomingMessage(data: any): IncomingMessage | null {
   try {
-    // Try Twilio format first (most likely)
     if (data.Body && data.From) {
       return {
         from: data.From.replace("whatsapp:", ""),
@@ -41,7 +37,6 @@ function parseIncomingMessage(data: any): IncomingMessage | null {
       };
     }
 
-    // Try Meta Webhook format
     const message = data.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
     if (message) {
       return {
@@ -53,8 +48,7 @@ function parseIncomingMessage(data: any): IncomingMessage | null {
     }
 
     return null;
-  } catch (error) {
-    console.error("Failed to parse message:", error);
+  } catch {
     return null;
   }
 }

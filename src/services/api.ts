@@ -31,20 +31,14 @@ export async function registerWithEmail(email: string): Promise<{
   error?: string;
 }> {
   try {
-    console.log(`Calling API: POST /auth/register with email ${email}`);
-
     const response = await axios.post<RegisterResponse>(
       `${APEXTUNNEL_API_URL}/auth/register`,
       { email },
       {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         timeout: 10000,
       }
     );
-
-    console.log(`✓ Registration successful. Is existing user: ${response.data.isExistingUser}`);
 
     return {
       success: true,
@@ -53,8 +47,6 @@ export async function registerWithEmail(email: string): Promise<{
     };
   } catch (error) {
     const apiError = handleAPIError(error);
-    console.error(`✗ Registration error: ${apiError.message}`);
-
     return {
       success: false,
       message: apiError.message,
@@ -74,20 +66,14 @@ export async function verifyOTPCode(
   error?: string;
 }> {
   try {
-    console.log(`Calling API: POST /auth/verify with email ${email}`);
-
     const response = await axios.post<VerifyOTPResponse>(
       `${APEXTUNNEL_API_URL}/auth/verify`,
       { email, otp },
       {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         timeout: 10000,
       }
     );
-
-    console.log("✓ OTP verified successfully");
 
     return {
       success: true,
@@ -97,8 +83,6 @@ export async function verifyOTPCode(
     };
   } catch (error) {
     const apiError = handleAPIError(error);
-    console.error(`✗ OTP verification error: ${apiError.message}`);
-
     return {
       success: false,
       message: apiError.message,
@@ -119,8 +103,6 @@ export async function getUserInfo(accessToken: string): Promise<{
   error?: string;
 }> {
   try {
-    console.log("Calling API: GET /user/me");
-
     const response = await axios.get<UserInfoResponse>(
       `${APEXTUNNEL_API_URL}/user/me`,
       {
@@ -132,8 +114,6 @@ export async function getUserInfo(accessToken: string): Promise<{
       }
     );
 
-    console.log("✓ User info fetched successfully");
-
     return {
       success: true,
       message: response.data.message,
@@ -141,8 +121,6 @@ export async function getUserInfo(accessToken: string): Promise<{
     };
   } catch (error) {
     const apiError = handleAPIError(error);
-    console.error(`✗ User info fetch error: ${apiError.message}`);
-
     return {
       success: false,
       message: apiError.message,

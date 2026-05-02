@@ -20,7 +20,6 @@ export async function sendWhatsAppMessage(
     
     let messageBody = response.text;
     
-    // Add buttons as numbered list
     if (response.buttons && response.buttons.length > 0) {
       const buttonText = response.buttons
         .map((btn, idx) => `${idx + 1}. ${btn.title}`)
@@ -28,16 +27,12 @@ export async function sendWhatsAppMessage(
       messageBody = `${response.text}\n\n${buttonText}`;
     }
 
-    console.log(`Sending WhatsApp message to whatsapp:${cleanNumber}`);
-    console.log(`Message body: ${messageBody}`);
-
-    // Use form-encoded data instead of JSON
     const params = new URLSearchParams();
     params.append("From", `whatsapp:${TWILIO_WHATSAPP_NUMBER}`);
     params.append("To", `whatsapp:${cleanNumber}`);
     params.append("Body", messageBody);
 
-    const response_data = await axios.post(TWILIO_API_URL, params, {
+    await axios.post(TWILIO_API_URL, params, {
       auth: {
         username: TWILIO_ACCOUNT_SID,
         password: TWILIO_AUTH_TOKEN,
@@ -47,10 +42,9 @@ export async function sendWhatsAppMessage(
       },
     });
 
-    console.log(`✓ Message sent successfully`);
-  } catch (error: any) {
-    console.error("Failed to send WhatsApp message");
-    console.error("Error details:", error.response?.data || error.message);
+    console.log(`[WhatsApp] Message sent to ${cleanNumber}`);
+  } catch (error) {
+    console.error("[WhatsApp Error]", error instanceof Error ? error.message : "Unknown error");
     throw error;
   }
 }
