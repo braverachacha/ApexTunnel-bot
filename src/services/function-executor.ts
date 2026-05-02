@@ -26,13 +26,13 @@ export async function executeFunction(
         return await verifyOTP(session.email as string, call.params.otp);
 
       case "get_account_info":
-        return { success: true, message: "Fetching account info...", data: session };
+        return { success: true, message: "Fetching account info...", data: { email: session.email, joined: session.created_at, status: "Active", verified: true } };
 
       case "get_tunnels":
-        return { success: true, message: "Fetching tunnels..." };
+        return { success: true, message: "Fetching tunnels...", data: { tunnels: [], count: 0 } };
 
       case "get_domains":
-        return { success: true, message: "Fetching domains..." };
+        return { success: true, message: "Fetching domains...", data: { domains: [], count: 0 } };
 
       default:
         return { success: false, message: "Unknown function" };
@@ -67,9 +67,7 @@ async function changeEmail(phoneNumber: string): Promise<{
   message: string;
 }> {
   try {
-    // Reset state to awaiting_email
     await updateUserSession(phoneNumber, "state", "awaiting_email");
-
     return {
       success: true,
       message: "Please enter your new email address.",

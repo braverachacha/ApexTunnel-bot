@@ -2,13 +2,7 @@ import { Request, Response } from "express";
 import { parseTelegramMessage } from "./services/telegram";
 import { routeMessage } from "./router";
 import { sendTelegramMessage } from "./services/telegram";
-
-interface IncomingMessage {
-  from: string;
-  body: string;
-  messageId: string;
-  timestamp: string;
-}
+import { IncomingMessage } from "./utils/types";
 
 export async function handleTelegramWebhook(
   req: Request,
@@ -29,6 +23,7 @@ export async function handleTelegramWebhook(
       body: parsed.messageText,
       messageId: `${parsed.userId}-${Date.now()}`,
       timestamp: new Date().toISOString(),
+      platform: "telegram",
     };
 
     console.log(`[Telegram] ${message.from}: ${message.body}`);

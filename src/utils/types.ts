@@ -4,6 +4,7 @@ export interface IncomingMessage {
   body: string;
   messageId: string;
   timestamp: string;
+  platform: "whatsapp" | "telegram";
 }
 
 // User session state in Redis

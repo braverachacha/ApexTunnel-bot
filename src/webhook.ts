@@ -34,6 +34,7 @@ function parseIncomingMessage(data: any): IncomingMessage | null {
         body: data.Body,
         messageId: data.MessageSid || "",
         timestamp: new Date().toISOString(),
+        platform: "whatsapp",
       };
     }
 
@@ -44,6 +45,7 @@ function parseIncomingMessage(data: any): IncomingMessage | null {
         body: message.text?.body || "",
         messageId: message.id,
         timestamp: message.timestamp,
+        platform: "whatsapp",
       };
     }
 

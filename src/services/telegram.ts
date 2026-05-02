@@ -58,6 +58,15 @@ export function parseTelegramMessage(data: any): {
     }
 
     if (data.callback_query?.data) {
+      // Acknowledge the callback so Telegram removes the loading spinner
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (botToken) {
+        fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: data.callback_query.id }),
+        }).catch(() => {});
+      }
       return {
         chatId: String(data.callback_query.message.chat.id),
         userId: String(data.callback_query.from.id),
