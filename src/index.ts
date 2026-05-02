@@ -2,6 +2,7 @@ import express, { Express, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import { initRedis } from "./services/session";
 import { handleWebhook } from "./webhook";
+import { handleTelegramWebhook } from "./telegram-webhook";
 
 dotenv.config();
 
@@ -11,19 +12,17 @@ const PORT: number = parseInt(process.env.PORT || "9000", 10);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Health check
 app.get("/health", (req: Request, res: Response): void => {
   res.status(200).json({
     status: "ok",
-    message: "ApexTunnel WhatsApp Bot is running",
+    message: "ApexTunnel Bot is running",
     timestamp: new Date().toISOString(),
   });
 });
 
-// Webhook POST endpoint
+// WhatsApp Webhook (legacy, keep for now)
 app.post("/webhook", handleWebhook);
-
-// Webhook verification endpoint
 app.get("/webhook", (req: Request, res: Response): void => {
   const verifyToken: string = process.env.WEBHOOK_VERIFY_TOKEN || "";
   const token: string | undefined = req.query.hub_verify_token as string;
@@ -33,19 +32,21 @@ app.get("/webhook", (req: Request, res: Response): void => {
     console.log("✓ Webhook verified");
     res.status(200).send(challenge);
   } else {
-    console.warn("✗ Webhook verification failed");
     res.status(403).send("Forbidden");
   }
 });
 
-// 404 handler (before error handler)
+// Telegram Webhook
+app.post("/telegram-webhook", handleTelegramWebhook);
+
+// 404 handler
 app.use((req: Request, res: Response): void => {
   res.status(404).json({ error: "Not found" });
 });
 
-// Error handling middleware (must be last)
+// Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-  console.error("Error:", err.message);
+  console.error("[Error]", err.message);
   res.status(500).json({
     error: "Internal server error",
     message: process.env.NODE_ENV === "production" ? undefined : err.message,
@@ -59,11 +60,11 @@ async function start(): Promise<void> {
 
     app.listen(PORT, (): void => {
       console.log(`✓ ApexTunnel Bot running on port ${PORT}`);
-      console.log(`  Webhook: POST http://localhost:${PORT}/webhook`);
-      console.log(`  Health:  GET  http://localhost:${PORT}/health`);
+      console.log(`  Telegram: POST https://apextunnel-bot.apextunnel.top/telegram-webhook`);
+      console.log(`  Health:   GET  http://localhost:${PORT}/health`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("Failed to start:", error);
     process.exit(1);
   }
 }

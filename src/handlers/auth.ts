@@ -21,34 +21,37 @@ export async function handleAuthFlow(
     return { text: response };
   }
 
+  // Check if email exists WITHOUT registering
   const registerResult = await registerWithEmail(email);
 
   if (!registerResult.success) {
-    const response = await generateResponse(`Registration error: ${registerResult.message}. Ask user to try again.`);
+    const response = await generateResponse(`Registration check failed: ${registerResult.message}. Tell user to try again.`);
     return { text: response };
   }
 
-  await setUserSession(phoneNumber, {
-    email: email,
-    state: "awaiting_confirmation",
-    created_at: new Date().toISOString(),
-  });
-
+  // If email already exists, go straight to OTP
   if (registerResult.isExistingUser) {
     await updateUserSession(phoneNumber, "state", "awaiting_otp");
     const response = await generateResponse(`OTP has been sent to ${email}. Ask user to enter the 6-digit code from their email.`);
     return { text: response };
   }
 
-  const introText = await generateMenuResponse(
-    `User wants to register with email ${email}. Confirm this is correct and ask if they want to proceed.`
+  // NEW EMAIL: Ask for confirmation before registering
+  await setUserSession(phoneNumber, {
+    email: email,
+    state: "awaiting_confirmation",
+    created_at: new Date().toISOString(),
+  });
+
+  const confirmText = await generateResponse(
+    `User wants to create a new account with email ${email}. Ask them to confirm they want to register this email address.`
   );
 
   return {
-    text: introText,
+    text: confirmText,
     buttons: [
-      { id: "register", title: "Register Me" },
-      { id: "cancel", title: "Cancel" },
+      { id: "register", title: "Yes, Register" },
+      { id: "cancel", title: "No, Cancel" },
     ],
   };
 }
