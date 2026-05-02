@@ -1,11 +1,11 @@
 import { MessageResponse } from "../utils/types";
+import { generateResponse } from "../services/ai";
 
 export async function handleDomains(
   phoneNumber: string,
   session: Record<string, string>
 ): Promise<MessageResponse> {
-  // TODO: Fetch from ApexTunnel API
-  return {
-    text: "You have 0 registered domains.",
-  };
+  const response = await generateResponse("User asked about registered domains. They have 0 registered domains. Suggest they manage domains via the web dashboard.");
+
+  return { text: response };
 }

@@ -1,7 +1,8 @@
 import { MessageResponse } from "../utils/types";
+import { generateResponse } from "../services/ai";
 
 export async function handleHelp(): Promise<MessageResponse> {
-  return {
-    text: "ApexTunnel Bot Help\n\n1. Register: Create a new account\n2. Account: View your account info\n3. Tunnels: Manage your tunnels\n4. Domains: Manage your domains",
-  };
+  const response = await generateResponse("User asked for help. Briefly explain what ApexTunnel Bot can do: register accounts, check account info, view tunnels, manage domains.");
+
+  return { text: response };
 }

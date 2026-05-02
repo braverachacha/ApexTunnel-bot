@@ -9,6 +9,7 @@ import {
   verifyOTPCode,
   getUserInfo,
 } from "../services/api";
+import { generateResponse, generateMenuResponse } from "../services/ai";
 
 export async function handleAuthFlow(
   phoneNumber: string,
@@ -16,17 +17,15 @@ export async function handleAuthFlow(
   session: Record<string, string>
 ): Promise<MessageResponse> {
   if (!validateEmail(email)) {
-    return {
-      text: "Invalid email format. Please enter a valid email address.",
-    };
+    const response = await generateResponse("User provided invalid email format. Tell them politely to enter a valid email address.");
+    return { text: response };
   }
 
   const registerResult = await registerWithEmail(email);
 
   if (!registerResult.success) {
-    return {
-      text: `Error: ${registerResult.message}. Please try again.`,
-    };
+    const response = await generateResponse(`Registration error: ${registerResult.message}. Ask user to try again.`);
+    return { text: response };
   }
 
   await setUserSession(phoneNumber, {
@@ -37,13 +36,16 @@ export async function handleAuthFlow(
 
   if (registerResult.isExistingUser) {
     await updateUserSession(phoneNumber, "state", "awaiting_otp");
-    return {
-      text: `OTP sent to ${email}. Enter the code from your email.`,
-    };
+    const response = await generateResponse(`OTP has been sent to ${email}. Ask user to enter the 6-digit code from their email.`);
+    return { text: response };
   }
 
+  const introText = await generateMenuResponse(
+    `User wants to register with email ${email}. Confirm this is correct and ask if they want to proceed.`
+  );
+
   return {
-    text: `Register account with ${email}?`,
+    text: introText,
     buttons: [
       { id: "register", title: "Register Me" },
       { id: "cancel", title: "Cancel" },
@@ -59,17 +61,15 @@ export async function handleOTPVerification(
   const email = session.email as string;
 
   if (!validateOTP(otp)) {
-    return {
-      text: "Invalid OTP format. Please enter a 6-digit code.",
-    };
+    const response = await generateResponse("User provided invalid OTP format. Tell them to enter a 6-digit code.");
+    return { text: response };
   }
 
   const verifyResult = await verifyOTPCode(email, otp);
 
   if (!verifyResult.success) {
-    return {
-      text: `Error: ${verifyResult.message}`,
-    };
+    const response = await generateResponse(`OTP verification failed: ${verifyResult.message}. Tell user to try again.`);
+    return { text: response };
   }
 
   await setUserSession(phoneNumber, {
@@ -81,8 +81,12 @@ export async function handleOTPVerification(
     verified_at: new Date().toISOString(),
   });
 
+  const introText = await generateMenuResponse(
+    "User's account has been verified successfully. Ask what they'd like to do: check account info, view tunnels, manage domains, or get help."
+  );
+
   return {
-    text: `Welcome! Account verified. What would you like to do?`,
+    text: introText,
     buttons: [
       { id: "account_info", title: "Account Info" },
       { id: "tunnels", title: "Active Tunnels" },
@@ -99,17 +103,15 @@ export async function displayUserInfo(
   const accessToken = session.accessToken as string;
 
   if (!accessToken) {
-    return {
-      text: "Session invalid. Please start over.",
-    };
+    const response = await generateResponse("User's session has expired. Ask them to start over.");
+    return { text: response };
   }
 
   const userInfoResult = await getUserInfo(accessToken);
 
   if (!userInfoResult.success) {
-    return {
-      text: `Error: ${userInfoResult.message}`,
-    };
+    const response = await generateResponse(`Failed to fetch user info: ${userInfoResult.message}. Tell user to try again.`);
+    return { text: response };
   }
 
   const info = userInfoResult.userInfo;
@@ -117,7 +119,15 @@ export async function displayUserInfo(
     ? new Date(info.joined_at).toLocaleDateString()
     : "N/A";
 
-  return {
-    text: `Account Info\n\nEmail: ${info?.email}\nJoined: ${joinedDate}\nVerified: ${info?.verified ? "Yes" : "No"}\nStatus: Active`,
-  };
+  const context = `User's account info:
+Email: ${info?.email}
+Joined: ${joinedDate}
+Verified: ${info?.verified ? "Yes" : "No"}
+Status: Active
+
+Present this information in a friendly way.`;
+
+  const response = await generateResponse(context);
+
+  return { text: response };
 }
