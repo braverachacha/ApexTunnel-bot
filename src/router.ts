@@ -42,8 +42,28 @@ export async function routeMessage(
   }
 
   if (currentState === "awaiting_otp") {
-    // Check if user clicked resend button
-    if (body.toLowerCase().includes("resend") || body === "resend_otp") {
+    // Check if user wants to change email
+    const intent = await interpretIntent(body);
+
+    if (intent.function === "change_email" && intent.confidence > 0.7) {
+      const result = await executeFunction(
+        { name: "change_email", params: {} },
+        from,
+        session!
+      );
+      
+      // Refresh session after state change
+      session = await getUserSession(from);
+      
+      const response: MessageResponse = {
+        text: result.message,
+      };
+      await storeMessage(from, "bot", response.text);
+      return response;
+    }
+
+    // Check if user wants to resend OTP
+    if (intent.function === "resend_otp" && intent.confidence > 0.7) {
       const result = await executeFunction(
         { name: "resend_otp", params: {} },
         from,
@@ -53,6 +73,7 @@ export async function routeMessage(
         text: result.message,
         buttons: [
           { id: "resend_otp", title: "Resend OTP" },
+          { id: "change_email", title: "Change Email" },
         ],
       };
       await storeMessage(from, "bot", response.text);
@@ -61,6 +82,10 @@ export async function routeMessage(
 
     // Otherwise, handle OTP verification
     const response = await handleOTPVerification(from, body, session!);
+    response.buttons = [
+      { id: "resend_otp", title: "Resend OTP" },
+      { id: "change_email", title: "Change Email" },
+    ];
     await storeMessage(from, "bot", response.text);
     return response;
   }
@@ -101,6 +126,7 @@ async function handleConfirmation(
       text: `OTP sent to ${session.email}. Enter the code.`,
       buttons: [
         { id: "resend_otp", title: "Resend OTP" },
+        { id: "change_email", title: "Change Email" },
       ],
     };
   }

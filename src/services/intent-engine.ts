@@ -1,5 +1,4 @@
 import axios from "axios";
-import { FunctionCall } from "./function-executor";
 
 const GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -8,7 +7,8 @@ const INTENT_SYSTEM_PROMPT = `You are ApexTunnel Bot's intent engine. Read user 
 
 Available functions:
 - "resend_otp" - User wants OTP resent (keywords: resend, re-send, didn't get, haven't received, again)
-- "verify_otp" - User is providing OTP code (keywords: numbers, codes, 6 digits)
+- "change_email" - User wants to use different email (keywords: wrong email, invalid, change, different, new email, mistake)
+- "verify_otp" - User is providing OTP code (keywords: numbers, 6 digits, codes)
 - "register_email" - User providing email for registration (keywords: @, register, signup)
 - "get_account_info" - User wants account details (keywords: account, info, status, email)
 - "get_tunnels" - User wants tunnels list (keywords: tunnel, running, active)
@@ -16,7 +16,8 @@ Available functions:
 - "none" - No function needed, just respond
 
 Rules:
-- If user says "resend otp" or "didn't get otp" → resend_otp
+- If user says "wrong email", "change email", "invalid email" → change_email
+- If user says "resend otp" → resend_otp
 - If user sends 6 digits → verify_otp with the code
 - If user sends email → register_email
 - If unsure → none

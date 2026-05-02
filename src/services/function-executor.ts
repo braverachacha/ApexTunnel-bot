@@ -6,9 +6,6 @@ export interface FunctionCall {
   params: Record<string, any>;
 }
 
-/**
- * Execute functions based on bot decisions
- */
 export async function executeFunction(
   call: FunctionCall,
   phoneNumber: string,
@@ -18,6 +15,9 @@ export async function executeFunction(
     switch (call.name) {
       case "resend_otp":
         return await resendOTP(session.email as string);
+
+      case "change_email":
+        return await changeEmail(phoneNumber);
 
       case "register_email":
         return await registerNewEmail(call.params.email);
@@ -50,7 +50,6 @@ async function resendOTP(email: string): Promise<{
   message: string;
 }> {
   try {
-    // Call register endpoint to resend OTP
     const result = await registerWithEmail(email);
     return {
       success: result.success,
@@ -60,6 +59,23 @@ async function resendOTP(email: string): Promise<{
     };
   } catch (error) {
     return { success: false, message: "Failed to resend OTP" };
+  }
+}
+
+async function changeEmail(phoneNumber: string): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  try {
+    // Reset state to awaiting_email
+    await updateUserSession(phoneNumber, "state", "awaiting_email");
+
+    return {
+      success: true,
+      message: "Please enter your new email address.",
+    };
+  } catch (error) {
+    return { success: false, message: "Failed to change email" };
   }
 }
 
