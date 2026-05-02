@@ -1,11 +1,13 @@
 import { IncomingMessage, MessageResponse } from "./utils/types";
 import { getUserSession, setUserSession, updateUserSession } from "./services/session";
 import { storeMessage } from "./services/memory";
-import { makeDecision } from "./services/decision-engine";
+import { interpretIntent } from "./services/intent-engine";
+import { executeFunction } from "./services/function-executor";
 import { generateActionResponse } from "./services/response-generator";
 import {
   handleAuthFlow,
   handleOTPVerification,
+  displayUserInfo,
 } from "./handlers/auth";
 
 export async function routeMessage(
@@ -40,33 +42,45 @@ export async function routeMessage(
   }
 
   if (currentState === "awaiting_otp") {
+    // Check if user clicked resend button
+    if (body.toLowerCase().includes("resend") || body === "resend_otp") {
+      const result = await executeFunction(
+        { name: "resend_otp", params: {} },
+        from,
+        session!
+      );
+      const response: MessageResponse = {
+        text: result.message,
+        buttons: [
+          { id: "resend_otp", title: "Resend OTP" },
+        ],
+      };
+      await storeMessage(from, "bot", response.text);
+      return response;
+    }
+
+    // Otherwise, handle OTP verification
     const response = await handleOTPVerification(from, body, session!);
     await storeMessage(from, "bot", response.text);
     return response;
   }
 
   if (currentState === "verified") {
-    // Make decision
-    const decision = await makeDecision(body);
+    const intent = await interpretIntent(body);
 
-    // Generate ONE response based on decision
-    const responseText = await generateActionResponse(decision.action, {
-      email: session!.email,
-      joined: new Date(session!.verified_at || "").toLocaleDateString(),
+    const funcResult = await executeFunction(
+      { name: intent.function, params: intent.params },
+      from,
+      session!
+    );
+
+    const responseText = await generateActionResponse(intent.function, {
+      success: funcResult.success,
+      message: funcResult.message,
+      ...funcResult.data,
     });
 
     const response: MessageResponse = { text: responseText };
-
-    // Add buttons only for menu
-    if (decision.action === "menu") {
-      response.buttons = [
-        { id: "account", title: "Account Info" },
-        { id: "tunnels", title: "Active Tunnels" },
-        { id: "domains", title: "Registered Domains" },
-        { id: "help", title: "Help" },
-      ];
-    }
-
     await storeMessage(from, "bot", responseText);
     return response;
   }
@@ -85,6 +99,9 @@ async function handleConfirmation(
     await updateUserSession(phoneNumber, "state", "awaiting_otp");
     return {
       text: `OTP sent to ${session.email}. Enter the code.`,
+      buttons: [
+        { id: "resend_otp", title: "Resend OTP" },
+      ],
     };
   }
 

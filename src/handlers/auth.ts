@@ -21,34 +21,36 @@ export async function handleAuthFlow(
     return { text: response };
   }
 
-  // Check if email exists WITHOUT registering
   const registerResult = await registerWithEmail(email);
 
   if (!registerResult.success) {
-    const response = await generateResponse(`Registration check failed: ${registerResult.message}. Tell user to try again.`);
+    const response = await generateResponse(`Registration error: ${registerResult.message}. Ask user to try again.`);
     return { text: response };
   }
 
-  // If email already exists, go straight to OTP
-  if (registerResult.isExistingUser) {
-    await updateUserSession(phoneNumber, "state", "awaiting_otp");
-    const response = await generateResponse(`OTP has been sent to ${email}. Ask user to enter the 6-digit code from their email.`);
-    return { text: response };
-  }
-
-  // NEW EMAIL: Ask for confirmation before registering
   await setUserSession(phoneNumber, {
     email: email,
     state: "awaiting_confirmation",
     created_at: new Date().toISOString(),
   });
 
-  const confirmText = await generateResponse(
-    `User wants to create a new account with email ${email}. Ask them to confirm they want to register this email address.`
+  if (registerResult.isExistingUser) {
+    await updateUserSession(phoneNumber, "state", "awaiting_otp");
+    const response = await generateResponse(`OTP has been sent to ${email}. Ask user to enter the 6-digit code from their email.`);
+    return { 
+      text: response,
+      buttons: [
+        { id: "resend_otp", title: "Resend OTP" },
+      ],
+    };
+  }
+
+  const introText = await generateMenuResponse(
+    `User wants to register with email ${email}. Confirm this is correct and ask if they want to proceed.`
   );
 
   return {
-    text: confirmText,
+    text: introText,
     buttons: [
       { id: "register", title: "Yes, Register" },
       { id: "cancel", title: "No, Cancel" },
@@ -65,14 +67,24 @@ export async function handleOTPVerification(
 
   if (!validateOTP(otp)) {
     const response = await generateResponse("User provided invalid OTP format. Tell them to enter a 6-digit code.");
-    return { text: response };
+    return { 
+      text: response,
+      buttons: [
+        { id: "resend_otp", title: "Resend OTP" },
+      ],
+    };
   }
 
   const verifyResult = await verifyOTPCode(email, otp);
 
   if (!verifyResult.success) {
     const response = await generateResponse(`OTP verification failed: ${verifyResult.message}. Tell user to try again.`);
-    return { text: response };
+    return { 
+      text: response,
+      buttons: [
+        { id: "resend_otp", title: "Resend OTP" },
+      ],
+    };
   }
 
   await setUserSession(phoneNumber, {
