@@ -25,12 +25,10 @@ export async function sendTelegramMessage(
 
     if (response.buttons && response.buttons.length > 0) {
       payload.reply_markup = {
-        inline_keyboard: [
-          response.buttons.map((btn) => ({
-            text: btn.title,
-            callback_data: btn.id,
-          })),
-        ],
+        inline_keyboard: response.buttons.map((btn) => ([{
+          text: btn.title,
+          callback_data: btn.id,
+        }])),
       };
     }
 
@@ -58,7 +56,6 @@ export function parseTelegramMessage(data: any): {
     }
 
     if (data.callback_query?.data) {
-      // Acknowledge the callback so Telegram removes the loading spinner
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       if (botToken) {
         fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {

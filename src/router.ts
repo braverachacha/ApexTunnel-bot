@@ -109,7 +109,15 @@ async function handleDownloadSelection(
 
   const url = links[body];
   if (!url) {
-    return { text: "❌ Unknown download option." };
+    return {
+      text: "❌ Unknown download option. Please choose a platform below.",
+      buttons: [
+        { id: "dl_linux_arm64", title: "🐧 Linux ARM64" },
+        { id: "dl_linux_x64", title: "🐧 Linux x64" },
+        { id: "dl_win_x64", title: "🪟 Windows x64" },
+        { id: "dl_bundle", title: "📦 Bundle (Termux/Node)" },
+      ],
+    };
   }
 
   const isWindows = body === "dl_win_x64";
@@ -426,32 +434,33 @@ function extractOTP(text: string): string | null {
 function getStartedGuide(variant: "linux" | "windows" | "bundle", platform: "whatsapp" | "telegram"): string {
   const isTg = platform === "telegram";
   const b = (t: string) => isTg ? `<b>${t}</b>` : `*${t}*`;
-  const c = (t: string) => isTg ? `<code>${t}</code>` : `\`${t}\``;
+  const c = (t: string) => isTg ? `<code>${t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>` : `\`${t}\``;
   const i = (t: string) => isTg ? `<i>${t}</i>` : `_${t}_`;
 
   if (variant === "bundle") {
     return [
-      `🚀 ${b("Getting Started — Bundle (CJS)")}`,
+      `🚀 ${b("Getting Started — Termux / Bundle")}`,
       ``,
-      `${b("1. Prerequisites")}`,
-      `Make sure Node.js v18+ is installed on your system.`,
+      `${b("Prerequisites")}`,
+      `Make sure Node.js v18+ is installed:`,
+      `${c("pkg install nodejs")}`,
       ``,
-      `${b("2. Run directly")}`,
+      `${b("1. Download bundle.cjs")}`,
+      `Download from the Download menu and save it anywhere, e.g. ${c("~/apex/bundle.cjs")}`,
+      ``,
+      `${b("2. Save your auth token")}`,
       `${c("node bundle.cjs authtoken <your-token>")}`,
+      `You only need to do this once.`,
+      ``,
+      `${b("3. Expose a local port")}`,
       `${c("node bundle.cjs http 3000")}`,
+      `${c("node bundle.cjs http 3000 --subdomain myapp")}`,
+      `Your app will be live at ${c("myapp.apextunnel.top")}`,
       ``,
-      `${b("3. (Optional) Make it a global command")}`,
-      `${c("npm install -g .")}  ${i("— from the folder containing bundle.cjs")}`,
-      `Then use ${c("apex")} from anywhere.`,
+      `${b("4. Check status")}`,
+      `${c("node bundle.cjs status")}`,
       ``,
-      `${b("4. Expose your app")}`,
-      `${c("apex http 3000")}`,
-      `${c("apex http 3000 --subdomain myapp")}`,
-      ``,
-      `${b("5. Check status")}`,
-      `${c("apex status")}`,
-      ``,
-      `💡 ${b("Tip:")} Always save your token first with ${c("apex authtoken <token>")} — tunnels won't start without it.`,
+      `💡 ${b("Tip:")} Always run authtoken before starting a tunnel. Tap ${b("Get My Auth Token")} below to retrieve yours.`,
     ].join("\n");
   }
 
@@ -460,7 +469,7 @@ function getStartedGuide(variant: "linux" | "windows" | "bundle", platform: "wha
       `🚀 ${b("Getting Started — Windows")}`,
       ``,
       `${b("1. Extract the zip")}`,
-      `Unzip the downloaded file. You'll find ${c("apex.exe")} inside.`,
+      `Unzip the downloaded file. You'll find ${c("apex-client-win-x64.exe")} inside.`,
       ``,
       `${b("2. SmartScreen warning")}`,
       `⚠️ The binary is ${b("unsigned")}. If Windows SmartScreen appears:`,
@@ -469,19 +478,19 @@ function getStartedGuide(variant: "linux" | "windows" | "bundle", platform: "wha
       `This is expected — the binary is safe.`,
       ``,
       `${b("3. Add to PATH (recommended)")}`,
-      `Move ${c("apex.exe")} to a folder like ${c("C:\\Tools")} and add it to your system PATH, or run it directly from its folder.`,
+      `Move ${c("apex-client-win-x64.exe")} to a folder like ${c("C:\\Tools")} and add it to your system PATH, or run it directly from its folder.`,
       ``,
       `${b("4. Save your auth token")}`,
-      `${c("apex.exe authtoken <your-token>")}`,
+      `${c("apex-client-win-x64.exe authtoken <your-token>")}`,
       ``,
       `${b("5. Expose a local port")}`,
-      `${c("apex.exe http 3000")}`,
-      `${c("apex.exe http 3000 --subdomain myapp")}`,
+      `${c("apex-client-win-x64.exe http 3000")}`,
+      `${c("apex-client-win-x64.exe http 3000 --subdomain myapp")}`,
       ``,
       `${b("6. Check status")}`,
-      `${c("apex.exe status")}`,
+      `${c("apex-client-win-x64.exe status")}`,
       ``,
-      `💡 ${b("Tip:")} Run from the folder containing ${c("apex.exe")} or add it to PATH to use it from anywhere.`,
+      `💡 ${b("Tip:")} Run from the folder containing ${c("apex-client-win-x64.exe")} or add it to PATH to use it from anywhere.`,
     ].join("\n");
   }
 
@@ -490,22 +499,25 @@ function getStartedGuide(variant: "linux" | "windows" | "bundle", platform: "wha
     ``,
     `${b("1. Extract and make executable")}`,
     `${c("unzip apex-client-linux-*.zip")}`,
-    `${c("chmod +x apex")}`,
+    `${c("chmod +x apex-client-linux-*")}`,
     ``,
-    `${b("2. Move to PATH (optional but recommended)")}`,
+    `${b("2. Rename the binary")}`,
+    `${c("mv apex-client-linux-* apex")}`,
+    ``,
+    `${b("3. Move to PATH (optional but recommended)")}`,
     `${c("sudo mv apex /usr/local/bin/apex")}`,
     `Now you can run ${c("apex")} from anywhere.`,
     ``,
-    `${b("3. Save your auth token")}`,
+    `${b("4. Save your auth token")}`,
     `${c("apex authtoken <your-token>")}`,
     `You only need to do this once.`,
     ``,
-    `${b("4. Expose a local port")}`,
+    `${b("5. Expose a local port")}`,
     `${c("apex http 3000")}`,
     `${c("apex http 3000 --subdomain myapp")}`,
     `Your app will be live at ${c("myapp.apextunnel.top")}`,
     ``,
-    `${b("5. Check status")}`,
+    `${b("6. Check status")}`,
     `${c("apex status")}`,
     ``,
     `💡 ${b("Tip:")} Always run ${c("apex authtoken")} before starting a tunnel. Tap ${b("Get My Auth Token")} below to retrieve yours.`,
@@ -515,7 +527,7 @@ function getStartedGuide(variant: "linux" | "windows" | "bundle", platform: "wha
 function getTroubleshootingGuide(platform: "whatsapp" | "telegram"): string {
   const isTg = platform === "telegram";
   const b = (t: string) => isTg ? `<b>${t}</b>` : `*${t}*`;
-  const c = (t: string) => isTg ? `<code>${t}</code>` : `\`${t}\``;
+  const c = (t: string) => isTg ? `<code>${t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>` : `\`${t}\``;
 
   return [
     `🔧 ${b("Troubleshooting")}`,
@@ -526,11 +538,11 @@ function getTroubleshootingGuide(platform: "whatsapp" | "telegram"): string {
     `  • ${b("Network issue:")} Check your connection. Firewalls or proxies that block WebSocket connections can cause this. Try a different network or disable the proxy.`,
     ``,
     `${b("❌ permission denied when running apex")}`,
-    `Run ${c("chmod +x apex")} to make the binary executable, then try again.`,
+    `Run ${c("chmod +x apex-client-linux-*")} to make the binary executable, then try again.`,
     ``,
     `${b("❌ apex: command not found")}`,
-    `Run it as ${c("./apex http 3000")} from its folder, or move it to PATH:`,
-    `${c("sudo mv apex /usr/local/bin/apex")}`,
+    `Run it as ${c("./apex-client-linux-* http 3000")} from its folder, or rename and move to PATH:`,
+    `${c("mv apex-client-linux-* apex && sudo mv apex /usr/local/bin/apex")}`,
     ``,
     `${b("❌ Tunnel starts but app is unreachable")}`,
     `  • Make sure your local app is running on the port you specified.`,

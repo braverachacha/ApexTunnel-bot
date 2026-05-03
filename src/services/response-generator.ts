@@ -14,7 +14,6 @@ Rules:
 - Never make up data — only present what is given to you
 - If no data is provided, give a brief helpful message`;
 
-// In-memory token store (use Redis in production for multi-instance)
 const tokenStore = new Map<string, string>();
 
 export async function generateActionResponse(
@@ -100,7 +99,7 @@ export function generateDownloadResponse(): {
       { id: "dl_linux_arm64", title: "🐧 Linux ARM64" },
       { id: "dl_linux_x64", title: "🐧 Linux x64" },
       { id: "dl_win_x64", title: "🪟 Windows x64" },
-      { id: "dl_bundle", title: "📦 Bundle (CJS)" },
+      { id: "dl_bundle", title: "📦 Bundle (Termux/Node)" },
     ],
   };
 }

@@ -167,6 +167,9 @@ function fallbackDecision(userMessage: string, context: DecisionContext): Decisi
     if (/^(4|help|menu|\?)$/i.test(msg)) return { action: "help", params: {}, confidence: 0.9, reason: "Fallback: help request" };
     if (/^(token|\/token|my token|access token)$/i.test(msg)) return { action: "get_token", params: {}, confidence: 0.95, reason: "Fallback: token request" };
     if (/download|exposureapp|install/i.test(msg)) return { action: "download", params: {}, confidence: 0.85, reason: "Fallback: download request" };
+    if (msg === "get_started_bundle") return { action: "get_started_bundle", params: {}, confidence: 0.99, reason: "Fallback: exact button callback" };
+    if (msg === "get_started_linux") return { action: "get_started_linux", params: {}, confidence: 0.99, reason: "Fallback: exact button callback" };
+    if (msg === "get_started_windows") return { action: "get_started_windows", params: {}, confidence: 0.99, reason: "Fallback: exact button callback" };
     if (/get.?started|how.?to.?(use|run|install|expose)|setup|usage.?guide/i.test(msg) || msg === "get_started") return { action: "get_started", params: {}, confidence: 0.85, reason: "Fallback: get started request" };
     if (/troubleshoot|not.?working|error|reconnect|loop|permission.?denied|command.?not.?found|broken|crashing|dropping|issue/i.test(msg) || msg === "troubleshoot") return { action: "troubleshoot", params: {}, confidence: 0.85, reason: "Fallback: troubleshoot request" };
     if (/^(hi|hello|hey|start|\/start)$/i.test(msg)) return { action: "menu", params: {}, confidence: 0.8, reason: "Fallback: greeting in verified state" };
